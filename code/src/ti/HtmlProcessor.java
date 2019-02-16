@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class HtmlProcessor implements DocumentProcessor
 {
 
 	// P2
-	HashSet<String> stopWords = new HashSet<String>();
+	HashSet<String> stopWords;
 
 	/**
 	 * Creates a new HTML processor.
@@ -42,7 +43,9 @@ public class HtmlProcessor implements DocumentProcessor
 //		    }
 //		}
 		
-		this.stopWords = new HashSet();
+		// Read all lines in specified file and add to HashSet.
+		// HashSet can store only unique value.
+		this.stopWords = new HashSet<String> ();
 		List<String> words = Files.readAllLines(pathToStopWords.toPath());
 		this.stopWords.addAll(words);
 	}
@@ -53,11 +56,22 @@ public class HtmlProcessor implements DocumentProcessor
 	public Tuple<String, String> parse(String html)
 	{
 		// P2
+		
 		// Parse document
+		// When run application from command line $ index ".." ".."
+		// This method will be invoked and pass all text in .html file under folder 2011-document/xx/ one by one.
+		// We use JSOUP library to parse html text to HTML structure so that we can extract each section of HTML easily.
+		// Here we extract title and body as the requirment.
+		
 		Document doc;
+		// Parse HTML text to object.
 		doc = Jsoup.parse(html);
+		// Get title
 		String title = doc.title();
+		// Get body
 		Element body = doc.body();
+		
+		// Prevent NullPointerException in case title or body is empty
 		String bodyString = "";
 		if(title == null){
 			title = "";
@@ -65,13 +79,11 @@ public class HtmlProcessor implements DocumentProcessor
 		if(body != null){
 			bodyString = body.text();
 		}
+		
 		System.out.println();
 		System.out.println("title -->"+ title);
 		System.out.println("body --> "+ bodyString);
 		return new Tuple<String, String>(title, bodyString);
-
-		
-		//return null; // Return title and body separately
 	}
 
 	/**
@@ -86,13 +98,23 @@ public class HtmlProcessor implements DocumentProcessor
 
 		// P2
 		// Tokenizing, normalizing, stopwords, stemming, etc. 
+		
+		// Call our 4 steps of processing text.
+		// Tokenize sentence by separating word from " " space and get result as array of string.
 		ArrayList<String> tokens = tokenize(text);
+		
+		// For each term after tokenization, we do normalize (lower case) and check if it is stop word or not.
+		// If it's a stopword, we skip (TODO confirm this)
+		// 
 		for(String term: tokens) {
+			// Lower case
 			String normalizedTerm = normalize(term);
+			// If term exist in stop word, skip this word (TODO confirm)
 			if(!isStopWord(normalizedTerm)) {
+				// If term is not a stop word, then finding root word in stem method
+				// then add term to result list.
 				terms.add(stem(normalizedTerm));
 			}
-			
 		}
 
 		return terms;
@@ -109,7 +131,13 @@ public class HtmlProcessor implements DocumentProcessor
 		ArrayList<String> tokens = new ArrayList<>();
 
 		// P2
-
+		// Split sentences to token by space
+		List<String> listTokens = Arrays.asList(text.replaceAll("[^a-z0-9']", " ").split("\\s+"));
+		for(String token: listTokens) {
+			tokens.add(token);
+		}
+		System.out.println(tokens);
+		
 		return tokens;
 	}
 
@@ -124,7 +152,7 @@ public class HtmlProcessor implements DocumentProcessor
 		String normalized = null;
 
 		// P2
-
+		normalized = text.toLowerCase();
 		return normalized;
 	}
 

@@ -41,9 +41,11 @@ public class SearchEngine
             System.exit(1);
         }
 
+        //Running by $ index "/Volumes/Work/UPF/Class_WEB/lab3-searchengine/2011-index" "/Volumes/Work/UPF/Class_WEB/lab3-searchengine/2011-documents"
         // Build index
         File stopWords = new File("/Volumes/Work/UPF/Class_WEB/Lab3/lab3-search_engine/src/data_part2/stop-words.txt");
         DocumentProcessor docProcessor = new HtmlProcessor(stopWords); // P3
+        //DocumentProcessor docProcessor = new SimpleProcessor(); 
         Indexer indexer = new Indexer(pathToIndex, pathToCollection, docProcessor);
         indexer.run();
     }
@@ -85,6 +87,7 @@ public class SearchEngine
         // Stop word path
         File stopWords = new File("/Volumes/Work/UPF/Class_WEB/Lab3/lab3-search_engine/src/data_part2/stop-words.txt");
         DocumentProcessor docProcessor = new HtmlProcessor(stopWords); // P3
+        //DocumentProcessor docProcessor = new SimpleProcessor();
         RetrievalModel cosine = new Cosine(); // P4
         Batch batch = new Batch(pathToQueries, cosine, ind, docProcessor);
         batch.run();
@@ -121,6 +124,7 @@ public class SearchEngine
         // Stop word path
         File stopWords = new File("/Volumes/Work/UPF/Class_WEB/Lab3/lab3-search_engine/src/data_part2/stop-words.txt");
         DocumentProcessor docProcessor = new HtmlProcessor(stopWords); // P3
+        //DocumentProcessor docProcessor = new SimpleProcessor();
         RetrievalModel cosine = new Cosine(); // P4
         Interactive inter = new Interactive(cosine, ind, docProcessor);
         inter.run();
@@ -128,7 +132,7 @@ public class SearchEngine
 
     public static void main(String[] args) throws Exception
     {
-    	// index "/Volumes/Work/UPF/Class_WEB/Lab3/2011-index/" "/Volumes/Work/UPF/Class_WEB/Lab3/2011-documents"
+    
         if (args.length < 1) {
             SearchEngine.printUsage();
             System.exit(1);

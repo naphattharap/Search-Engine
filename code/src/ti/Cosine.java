@@ -21,24 +21,39 @@ public class Cosine implements RetrievalModel
 	 */
 	@Override
 	public ArrayList<Tuple<Integer, Double>> runQuery(String queryText, Index index, DocumentProcessor docProcessor)
-	{/*
-	  index: This gives access to vocabulary, documents, invertedIndex, directedIndex
-	  docProcessor: use this to process the text of the query (parsing)
-	  */
-		//Tuple<String, String> parsedText = docProcessor.parse(queryText);
-		Tuple<String, String> parsedText = docProcessor.parse(queryText);
-		//System.out.println("parsedText: "+parsedText.toString());
-		//ArrayList<String> processedText = docProcessor.processText(queryText);
+	{
+		// Arguments
+	  	// (1) index: This gives access to vocabulary, documents, invertedIndex, directedIndex
+	  	// (2) docProcessor: use this to process the text of the query (parsing)
+		
 		// P1
-		// Extract the terms from the query
+		
+		// Extract the terms from the query.
+		// Query text can come from running application in interactive mode (enter text through console) 
+		// or reading from topic.xml file when running application in batch mode.
+		// Call existing function to get term
+		// Example: query = What is the weather in Barcelona? I like Barcelona.
+		// Result will be [weather, Barcelona, Barcelona)
 		ArrayList<String> terms = docProcessor.processText(queryText);
 
-		
 		// Calculate the query vector
+		// We will get array of Tuple like {term1, weight1}, {term2, weight2} here.
+		// and the terms are unique.
 		ArrayList<Tuple<Integer, Double>> queryVector = computeVector(terms, index);
+		
 		// Calculate the document similarity
-		ArrayList<Tuple<Integer, Double>> scores = computeScores(queryVector, index);
-		return scores; // return results
+		// We get {doc1, similarity}, {doc2, similarity} from here.
+		ArrayList<Tuple<Integer, Double>> results = computeScores(queryVector, index);
+		
+		// The correctness can be confirmed by running batch mode and save output to 2011.run file
+		// then compare result with CorrectOutput file.
+		
+		/* Testing: To test this, check SearchEngine class if SimpleProcessor is used, not HTMLProcessor.
+		 * Run batch mode ex. --> 
+		 java ti.SearchEngine batch "/Volumes/Work/UPF/Class_WEB/lab3-searchengine/p1/2011-index" 
+		 "/Volumes/Work/UPF/Class_WEB/lab3-searchengine/2011-topics.xml" > 2011_2.run
+		 */
+		return results;
 	}
 
 	/**
@@ -51,22 +66,37 @@ public class Cosine implements RetrievalModel
 	protected ArrayList<Tuple<Integer, Double>> computeScores(ArrayList<Tuple<Integer, Double>> queryVector, Index index)
 	{
 		ArrayList<Tuple<Integer, Double>> results = new ArrayList<>();
-		Double sumWeightSq = 0.0;
+		
+		
+		// Arguments:
+		// queryVector: unique value of {term1, weight1} {term2, weight2} from computeVector method.
+		// index: This gives access to vocabulary, documents, invertedIndex, directedIndex
+		
 		// P1
-		// HashMap sims keeps [docId] as key and [similarity] as value.
-		HashMap sims = new HashMap<Integer, Double>();
-		int sizeQueryVector = queryVector.size();
 		
+		// Declare variable to store value of squared weight to be used for calculate similarity score.
+		// This is denominator for |q|
+		Double sumWeightSq = 0.0;
 		
-		// for each term in queryVector:
-		for(int  v=0; v < sizeQueryVector; v++) {
-			// get term object from vector (termId, weight)
-			Tuple<Integer, Double> term = queryVector.get(v);
+		// Initialize HashMap that store key and value object
+		// while the key is docId and value is similarity.
+		HashMap<Integer, Double> sims = new HashMap<Integer, Double>();
+
+		
+		// for each unique term in queryVector, we loop through term and calculate document weight for each term
+		// if the document ID does exist for the term before, we add up the weight to that doc ID.
+		
+		for(Tuple<Integer, Double> term: queryVector) {
+			// Get term ID from term object.
 			Integer termId = term.item1;
-			// w_tq
-			Double weightTermQuery = term.item2;
+			// Get term weight that calculate from queryVector method
+			Double weightQuery = term.item2;
 			
-			//for each tuple(document) in its invertedIndex
+			// Calculate sum of squared weight query which will be used to calculate denominator |q| later. 
+			sumWeightSq += Math.pow(weightQuery, 2.0);
+			
+			// Get documents that contains the term by calling invertedIndex and define termId as parameter.
+			// For each tuple(document) in its invertedIndex
 			// - here we get all relevant documents with a specific term.
 			// - invertedIndex return list of docId and weight
 			ArrayList<Tuple<Integer, Double>> termDocuments = index.invertedIndex.get(termId);
@@ -74,54 +104,51 @@ public class Cosine implements RetrievalModel
 			
 			// - Calculate weight of the term for each document.
 			for(Tuple<Integer, Double> termInDoc: termDocuments) {
-				// Multiply  w_td * w_tq	
+				// Doc ID that the term exist.
 				Integer docId = termInDoc.item1;
-				// w_td
-				Double weightTermDoc = termInDoc.item2;
+				// Weight of term in document
+				Double weightDoc = termInDoc.item2;
+				// Weight of term in query
+				Double weight =  weightDoc * weightQuery;
 				
-				Double weight =  weightTermDoc * weightTermQuery;
-				
-				sumWeightSq += Math.pow(weightTermQuery, 2.0);
-				
-				//Accumulate the previous result to sims[docId] 
-				//you are calculating here sum of the cosine similarity (numerator)
-				
+				// We check if in similarity HashMap contain the DocID or not.
+				// If yes, we add up the current weight with previous weight (sum of cosine similarity)
+				// otherwise, we added a new Doc ID and weight
 				if(sims.containsKey(docId)) {
 					Double prevWeight = (Double)sims.get(docId);
 					Double sumWeight = prevWeight + weight;
-					// Accumulate the previous result to sims[docId]
+					// Accumulate the previous result to the same DocID
 					sims.put(docId, sumWeight);
 				}else {
+					// DocID has never exist in HashMap, so add new DocID here.
 					sims.put(docId, weight);
 				}
 			}
 		}
+
+		// Computing |q| norm as a denominator of finding final similarity score.
+		Double queryNorm = Math.sqrt(sumWeightSq);
 		
-		
-		//ind.documents.get(docID).item2 += Math.pow(tf * idf, 2.0);
-		
-		Double norm = Math.sqrt(sumWeightSq);
-		
-		// find denominator for vector d and q
-		// for each tuple in sims:
-		
-		Iterator it = sims.entrySet().iterator();
+		// Loop through all items in HashMap to calculate similarity score for all Doc IDs.
+		Iterator<Map.Entry<Integer, Double>> it = sims.entrySet().iterator();
 		    while (it.hasNext()) {
-		        Map.Entry sim = (Map.Entry)it.next();
+		    	// Get each object from HashMap
+		        Map.Entry<Integer, Double> sim = (Map.Entry<Integer, Double>)it.next();
+		        // Get key (DocID) from object.
 		        Integer docId = (Integer)sim.getKey();
+		        // Get value (Doc Weight from above calculation) from object.
+		        Double docWeight = (Double)sim.getValue();
 		        
-		        // Divide the similarity by q and d denominator of cosine similarity
-		        //Get document by docId to get norm (DocName, Norm)
+		        // Get the document by passing DocID to index.documents.get(...) to get norm value (DocName, Norm)
+		        // document norm value is calculate from core process, we just use it.
 		        Tuple<String, Double> doc = index.documents.get(docId);
 		        Double docNorm = doc.item2;
-		        //System.out.println("DocId["+docId+"] has norm["+docNorm+"]");
-		        //TODO confirm if docNorm needs to do sqrt or not.
-		        Double docWeight = (Double)sim.getValue();
-		        //double normTerm = Math.sqrt(Math.pow(docWeight,2.0));
-		        Double similarity = docWeight/(docNorm * norm);
-		        //Double similarity = 0d;
+		        
+		        // Take formula from presentation that used to calculate similarity.
+		        // Divide the similarity by |q| and |d| denominator of cosine similarity
+		        Double similarity = docWeight/(docNorm * queryNorm);
 		        //Add the tuple to results
-		       results.add(new Tuple(docId, similarity));
+		       results.add(new Tuple<Integer, Double>(docId, similarity));
 		    }
 
 		// Sort documents by similarity and return the ranking
@@ -147,16 +174,22 @@ public class Cosine implements RetrievalModel
 	{ 
 		ArrayList<Tuple<Integer, Double>> vector = new ArrayList<>();
 		// P1
-		/*
-		terms: use this to calculate the tf  ==> 1 + log(freq_ti)
-		(freq_ti): how many times t_i appear in the query
 		
-		index: 	use this to get the "termId" and "iDF" (iDF already in the index, no need to calculate it)
-				for each term of the query (through vocabulary hashmap)
-	 	*/
-		//System.out.println("Terms: "+terms.toString());
+		// Arguments:
+		// (1) terms: use this to calculate the tf --> double tf = 1.0 + Math.log(Collections.frequency(terms, term));
+		// Collections.frequency(terms, term): how many times t_i appear in the query
+		
+		// (2) index: use this to get the "termId" and "iDF" (iDF already in the index, no need to calculate it)
+		// for each term of the query (through vocabulary hashmap)
+		
+		// Initialize HashSet 
+		// HashSet can store only unique value.
+		// Then we pass "terms" to HashSet, we will get unique term as a result.
+		// Example extracted terms from our sentence --> weather, barcelona, bacelona
+		// Result from passing terms to HashSet will be --> weather, barcelona
 		HashSet<String> termSet = new HashSet<String>(terms);
 
+		// Loop through all unique terms. (weather, barcelona)
 		for (String term : termSet) {
 			//Get term ID and iDF
 			Tuple<Integer, Double> indexTerm = index.vocabulary.get(term);
@@ -165,39 +198,21 @@ public class Cosine implements RetrievalModel
 			Double iDF = indexTerm.item2;
 			//System.out.println("Term ID: "+termId +" iDF: "+ iDF);
 			
-			//calculate tf from 1 + log(freq_ti)
-			// from slide tf_ij = number of occurrence of term i in document j
-			//(freq_ti)  => how many time t_i appears in the query
-
-			
-			// TODO confuse how to find the frequence of the term in the document
-			// but professor said that "how many times t_i appear in the query"
-			//TODO confirm the way to find tf
-			
-			//int freq = Collections.frequency(terms, term);
-			//TODO confirm with processor if it's log based 2 or 10
-//			double tf =  1 + Math.log(freq_ti);
-			//double tf =  1 + Math.log(freq) / Math.log(2);
-			// Compute weight and add posting
-            double tf = 1.0 + Math.log(Collections.frequency(terms, term));
-			
-			//weight_ij = weight assigned to term i in document j
-			//tf_ij number of occurrence of term i in document j
-			
-			
 			//Since iDF is calculated so we don't have to calculate here (Math.log(N/ni))
-			//- N = number of document in entire collection
-			//- int N = index.documents.size();
+			//- N = number of document in entire collection (int N = index.documents.size();)
 			//- ni = number of documents with term i.
-			//- int ni = index.invertedIndex.get(termId).size();
 			
-			Double weight = tf * iDF;
-			// Add term ID and weight
-			//System.out.println("Term ID: "+termId +", Weight: "+weight);
-			vector.add(new Tuple(termId, weight));
-			
-		}
+			// How many time the term appears in list of terms 
+			// can be calculated from Collections.frequency(terms, term)
+            double tf = 1.0 + Math.log(Collections.frequency(terms, term));
 
+			// Calculate weight of term 
+			Double weight = tf * iDF;
+
+			// Add term ID and weight to our list.
+			//System.out.println("Term ID: "+termId +", Weight: "+weight);
+			vector.add(new Tuple<Integer, Double>(termId, weight));
+		}
 		return vector;
 	}
 }
