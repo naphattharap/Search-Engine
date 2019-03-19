@@ -130,10 +130,9 @@ public class Cosine implements RetrievalModel
 		Double queryNorm = Math.sqrt(sumWeightSq);
 		
 		// Loop through all items in HashMap to calculate similarity score for all Doc IDs.
-		Iterator<Map.Entry<Integer, Double>> it = sims.entrySet().iterator();
-		    while (it.hasNext()) {
+		for(Map.Entry<Integer, Double> sim:  sims.entrySet()) {
 		    	// Get each object from HashMap
-		        Map.Entry<Integer, Double> sim = (Map.Entry<Integer, Double>)it.next();
+		        //Map.Entry<Integer, Double> sim = (Map.Entry<Integer, Double>)it.next();
 		        // Get key (DocID) from object.
 		        Integer docId = (Integer)sim.getKey();
 		        // Get value (Doc Weight from above calculation) from object.
