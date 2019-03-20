@@ -43,8 +43,8 @@ public class SearchEngine
 
         //Running by $ index "/Volumes/Work/UPF/Class_WEB/lab3-searchengine/2011-index" "/Volumes/Work/UPF/Class_WEB/lab3-searchengine/2011-documents"
         // Build index
-        File stopWords = new File("/Volumes/Work/UPF/Class_WEB/Lab3/lab3-search_engine/src/data_part2/stop-words.txt");
-        DocumentProcessor docProcessor = new HtmlProcessor(stopWords); // P3
+//        File stopWords = new File(pathToStopWords);
+        DocumentProcessor docProcessor = new HtmlProcessor(pathToStopWords); // P3
         //DocumentProcessor docProcessor = new SimpleProcessor(); 
         Indexer indexer = new Indexer(pathToIndex, pathToCollection, docProcessor);
         indexer.run();
@@ -85,7 +85,7 @@ public class SearchEngine
         // Instantiate retriever and run
         //DocumentProcessor docProcessor = new SimpleProcessor(); // P3
         // Stop word path
-        File stopWords = new File("/Volumes/Work/UPF/Class_WEB/Lab3/lab3-search_engine/src/data_part2/stop-words.txt");
+        File stopWords = new File("/Volumes/Work/UPF/Class_WEB/lab3-searchengine/code/src/stop-words.txt");
         DocumentProcessor docProcessor = new HtmlProcessor(stopWords); // P3
         //DocumentProcessor docProcessor = new SimpleProcessor();
         RetrievalModel cosine = new Cosine(); // P4
@@ -122,7 +122,7 @@ public class SearchEngine
 
         // Instantiate retriever and run
         // Stop word path
-        File stopWords = new File("/Volumes/Work/UPF/Class_WEB/Lab3/lab3-search_engine/src/data_part2/stop-words.txt");
+        File stopWords = new File("/Volumes/Work/UPF/Class_WEB/lab3-searchengine/code/src/stop-words.txt");
         DocumentProcessor docProcessor = new HtmlProcessor(stopWords); // P3
         //DocumentProcessor docProcessor = new SimpleProcessor();
         RetrievalModel cosine = new Cosine(); // P4

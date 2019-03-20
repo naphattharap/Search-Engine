@@ -192,7 +192,7 @@ public class Cosine implements RetrievalModel
 		for (String term : termSet) {
 			//Get term ID and iDF
 			Tuple<Integer, Double> indexTerm = index.vocabulary.get(term);
-			
+			if (indexTerm != null) {
 			Integer termId = indexTerm.item1;
 			Double iDF = indexTerm.item2;
 			//System.out.println("Term ID: "+termId +" iDF: "+ iDF);
@@ -211,6 +211,7 @@ public class Cosine implements RetrievalModel
 			// Add term ID and weight to our list.
 			//System.out.println("Term ID: "+termId +", Weight: "+weight);
 			vector.add(new Tuple<Integer, Double>(termId, weight));
+			}
 		}
 		return vector;
 	}

@@ -33,16 +33,6 @@ public class HtmlProcessor implements DocumentProcessor
 	public HtmlProcessor(File pathToStopWords) throws IOException
 	{
 		// P2
-		// Load stopwords
-//		try (BufferedReader br = new BufferedReader(new FileReader(pathToStopWords))) {
-//		    String line;
-//		    while ((line = br.readLine()) != null) {
-//		       // process the line.
-//		    	System.out.println(line);
-//		    	stopWords.add(line);
-//		    }
-//		}
-		
 		// Read all lines in specified file and add to HashSet.
 		// HashSet can store only unique value.
 		this.stopWords = new HashSet<String> ();
@@ -56,6 +46,9 @@ public class HtmlProcessor implements DocumentProcessor
 	public Tuple<String, String> parse(String html)
 	{
 		// P2
+		// As we have HTML documents, we need to parse them to remove HTML labels and comments and return
+		// a tuple containing the title and the body.
+		
 		
 		// Parse document
 		// When run application from command line $ index ".." ".."
@@ -80,9 +73,9 @@ public class HtmlProcessor implements DocumentProcessor
 			bodyString = body.text();
 		}
 		
-		System.out.println();
-		System.out.println("title -->"+ title);
-		System.out.println("body --> "+ bodyString);
+//		System.out.println();
+//		System.out.println("title -->"+ title);
+//		System.out.println("body --> "+ bodyString);
 		return new Tuple<String, String>(title, bodyString);
 	}
 
@@ -131,12 +124,14 @@ public class HtmlProcessor implements DocumentProcessor
 		ArrayList<String> tokens = new ArrayList<>();
 
 		// P2
+		//We should split the sentences in its corresponding words.
+		
 		// Split sentences to token by space
-		List<String> listTokens = Arrays.asList(text.replaceAll("[^a-z0-9']", " ").split("\\s+"));
+		List<String> listTokens = Arrays.asList(text.replaceAll("[^A-Za-z0-9']", " ").split("\\s+"));
 		for(String token: listTokens) {
 			tokens.add(token);
 		}
-		System.out.println(tokens);
+		// System.out.println(tokens);
 		
 		return tokens;
 	}
@@ -181,13 +176,23 @@ public class HtmlProcessor implements DocumentProcessor
 	protected String stem(String term)
 	{
 		String stem = null;
-
-		// P2
+//
+//		// P2
 		Stemmer stemer = new Stemmer();
 		stemer.add(term.toCharArray(), term.length());
+//		stemer.stem();
+//		stem = stemer.toString();
+//		
+//		return stem;
+		
+//		opennlp.tools.stemmer.PorterStemmer stemer = new opennlp.tools.stemmer.PorterStemmer();
+//		char[] cArray = term.toCharArray();
+//		for (char c : cArray) {
+//			stemer.add(c);
+//		}
+		
 		stemer.stem();
 		stem = stemer.toString();
-		
 		return stem;
 	}
 
